@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Chats
+{% endblock %}
+
+{% block main %}
+
+<div class="container" style="text-align:center; font-family:Arial, serif; font-size:14pt;">
+    <h1>SocketIO Chat</h1>
+    <input id="username" placeholder="Enter your username"/>
+    <input id="room" placeholder="Enter room Name"/>
+    <input id="key" placeholder="Enter room Key"/>
+    <button id="joinButton">Join Room</button>
+    <button id="leaveButton">Leave Room</button>
+    <div id="messages" style="margin: 0 auto;  width: 60%; text-align: left; min-height: 300px"></div>
+    <input id="message" autocomplete="off" /><button id="sendButton">Send</button>
+</div>
+    
+    <script>
+        $(document).ready(function(){
+            let socket = io.connect("http://127.0.0.1:5000");
+
+            socket.on('connect', function() {
+                console.log('Connected');
+            });
+
+            socket.on('status', function(data){
+                $('#messages').append($('<p >').text(data.msg).css({
+                    'color':'red',
+                    'text-align': 'center',
+                }));
+            });
+
+            socket.on('message', function(data){
+                if (data.type === 'alert') {
+                    alert(data.msg);  // Trigger the alert with the message from the server
+                }else{
+                    $('#messages').append($('<p>').text(data.msg));
+                }
+            });
+
+
+            $('#joinButton').on('click', function() {
+                let username = $('#username').val();
+                let room = $('#room').val();
+                let key = $('#key').val();
+                socket.emit('join', {'username': username, 'room': room, 'key':key});
+            });
+
+            $('#leaveButton').on('click', function() {
+                let username = $('#username').val();
+                let room = $('#room').val();
+                socket.emit('leave', {'username': username, 'room': room}); 
+ 
+            });
+
+            $('#sendButton').on('click', function() {
+                let message = $('#username').val() + ' : ' + $('#message').val();
+                let room = $('#room').val();
+                if(message !== "" && message !==null && room !== "" && room !== null){
+                    $('#messages').append($('<p>').text(message).css({
+                    'text-align': 'right',
+                     }));
+                }
+                
+                socket.emit('message', {'message': message, 'room': room});
+                $('#message').val('');
+            });
+        });
+    </script>
+
+
+{% endblock %}
